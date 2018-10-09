@@ -250,14 +250,46 @@ angular.module('app')
       if(filterText.length == 0) {
         note.visible = true;
       } else {
-        var words = filterText.split(" ");
-        var matchesTitle = words.every(function(word) { return  note.safeTitle().toLowerCase().indexOf(word) >= 0; });
-        var matchesBody = words.every(function(word) { return  note.safeText().toLowerCase().indexOf(word) >= 0; });
+        var words = this.accentFold(filterText).split(" ");
+        var accentFoldedTitle = this.accentFold(note.safeTitle().toLowerCase());
+        var accentFoldedText = this.accentFold(note.safeText().toLowerCase());
+
+        var matchesTitle = words.every(function(word) { return accentFoldedTitle.indexOf(word) >= 0; });
+        var matchesBody = words.every(function(word) { return accentFoldedText.indexOf(word) >= 0; });
         note.visible = matchesTitle || matchesBody;
       }
 
       return note.visible;
     }.bind(this)
+
+    this.accentFold = function(s) {
+      var map = [
+        ["\\s", ""],
+        ["[àáâãäå]", "a"],
+        ["æ", "ae"],
+        ["ç", "c"],
+        ["[èéêë]", "e"],
+        ["[ìíîï]", "i"],
+        ["ñ", "n"],
+        ["[òóôõö]", "o"],
+        ["œ", "oe"],
+        ["[ùúûü]", "u"],
+        ["[ýÿ]", "y"],
+        ["\\W", ""]
+      ];
+
+      for(var i = 0; i < map.length; ++i) {
+        s = s.replace(new RegExp(map[i][0], "gi"), function(match) {
+          if (match.toUpperCase() === match) {
+            return map[i][1].toUpperCase();
+          } else {
+            return map[i][1];
+          }
+        });
+      }
+
+      return s;
+    }
 
     this.onFilterEnter = function() {
       // For Desktop, performing a search right away causes input to lose focus.
