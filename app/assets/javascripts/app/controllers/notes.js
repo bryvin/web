@@ -246,46 +246,57 @@ angular.module('app')
         return note.visible;
       }
 
-      var filterText = this.noteFilter.text.toLowerCase();
+      // accent fold only 1 time on the entire filter text
+      var filterText = this.accentFold(this.noteFilter.text);
+
       if(filterText.length == 0) {
         note.visible = true;
       } else {
-        var words = this.accentFold(filterText).split(" ");
-        var accentFoldedTitle = this.accentFold(note.safeTitle().toLowerCase());
-        var accentFoldedText = this.accentFold(note.safeText().toLowerCase());
+        var words = filterText.split(" ");
 
-        var matchesTitle = words.every(function(word) { return accentFoldedTitle.indexOf(word) >= 0; });
-        var matchesBody = words.every(function(word) { return accentFoldedText.indexOf(word) >= 0; });
-        note.visible = matchesTitle || matchesBody;
+        var regexStr = "^";
+        words.forEach((word) => {
+          // for each word add it to the regex match.
+          // this match requires ALL filter words to be found for it consider it a positive match.
+          regexStr += "(?=[\\s\\S]*" + word + ")";
+        });
+        regexStr += "[\\s\\S]*";
+
+        var exp = new RegExp(regexStr, "gim");
+
+        note.visible = exp.test(note.safeTitle()) || exp.test(note.safeText());
       }
 
       return note.visible;
     }.bind(this)
 
     this.accentFold = function(s) {
+      /*
+        this solution is good for most scenarios and works as expected.
+        however it can run into issues as some languages work differently.
+        it may currently not account for all accented chars either.
+
+        https://alistapart.com/article/accent-folding-for-auto-complete
+      */
+
+      // map all non-accented versions to the regex match to query all possible versions
+      // including the original non-accented version
       var map = [
-        ["\\s", ""],
-        ["[àáâãäå]", "a"],
-        ["æ", "ae"],
-        ["ç", "c"],
-        ["[èéêë]", "e"],
-        ["[ìíîï]", "i"],
-        ["ñ", "n"],
-        ["[òóôõö]", "o"],
-        ["œ", "oe"],
-        ["[ùúûü]", "u"],
-        ["[ýÿ]", "y"],
-        ["\\W", ""]
+        [/ae/g, "(?:æ|ae)"], // special because 2 characters => only 1
+        [/oe/g, "(?:œ|oe)"], // special because 2 characters => only 1
+        [/a/g, "[aàáâãäå]"],
+        [/e/g, "[eèéêë]"],
+        [/i/g, "[iìíîï]"],
+        [/o/g, "[oòóôõö]"],
+        [/u/g, "[uùúûü]"],
+        [/y/g, "[yýÿ]"],
+        [/c/g, "[cç]"],
+        [/n/g, "[nñ]"]
       ];
 
+      // replace all above characters that can be matched to an accented version
       for(var i = 0; i < map.length; ++i) {
-        s = s.replace(new RegExp(map[i][0], "gi"), function(match) {
-          if (match.toUpperCase() === match) {
-            return map[i][1].toUpperCase();
-          } else {
-            return map[i][1];
-          }
-        });
+        s = s.replace(map[i][0], map[i][1]);
       }
 
       return s;
