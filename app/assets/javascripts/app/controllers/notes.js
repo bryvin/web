@@ -284,14 +284,14 @@ angular.module('app')
       var map = [
         [/ae/g, "(?:æ|ae)"], // special because 2 characters => only 1
         [/oe/g, "(?:œ|oe)"], // special because 2 characters => only 1
-        [/a/g, "[aàáâãäå]"],
-        [/e/g, "[eèéêë]"],
-        [/i/g, "[iìíîï]"],
-        [/o/g, "[oòóôõö]"],
-        [/u/g, "[uùúûü]"],
+        [/a/g, "[aàáâãäåā]"],
+        [/e/g, "[eèéêëēėę]"],
+        [/i/g, "[iìíîïīį]"],
+        [/o/g, "[oòóôõöøō]"],
+        [/u/g, "[uùúûüū]"],
         [/y/g, "[yýÿ]"],
-        [/c/g, "[cç]"],
-        [/n/g, "[nñ]"]
+        [/c/g, "[cçćč]"],
+        [/n/g, "[nñń]"]
       ];
 
       // replace all above characters that can be matched to an accented version
